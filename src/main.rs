@@ -44,7 +44,7 @@ impl Plane {
             }
         }
         chart.configure_mesh().light_line_style(WHITE).draw().map_err(|_| ())?;
-        chart.draw_series(self.buf.iter().enumerate().map(|i,e| CandleStick::new(i, 0, e, low, close, gain_style, loss_style, width)));
+        chart.draw_series(self.buf.iter().enumerate().map(|i,e| CandleStick::new(Local::now(), 0, e, low, close, gain_style, loss_style, width)));
         Ok(())
     }
 
@@ -59,11 +59,11 @@ impl Iterator for Plane {
     fn next(&mut self) -> Option<Self::Item> {
         let n = self.r_thread.gen::<usize>();
         if n % 2 == 0 {
-            if None == self.ptr.checked_add_signed(1) {
+            if self.ptr.checked_add_signed(1).is_none() {
                 self.ptr-=1
             }
         } else {
-            if None == self.ptr.checked_add_signed(-1) {
+            if self.ptr.checked_add_signed(-1).is_none() {
                 self.ptr+=1
             }
         }
