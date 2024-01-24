@@ -1,14 +1,14 @@
 use std::ffi::OsStr;
 use std::path::Path;
 
-use plotters::backend::SVGBackend;
+use plotters::series::LineSeries;
+use plotters::{backend::SVGBackend, series::Histogram};
 use plotters::chart::ChartBuilder;
 use plotters::drawing::IntoDrawingArea;
-use plotters::element::CandleStick;
-use plotters::style::IntoFont;
+use plotters::style::{IntoFont, Color};
 use rand::rngs::ThreadRng;
 use rand::Rng;
-use plotters::prelude::WHITE;
+use plotters::prelude::{WHITE,RED};
 
 struct Plane {
     buf: Vec<usize>,
@@ -37,19 +37,27 @@ impl Plane {
             .x_label_area_size(40)
             .y_label_area_size(40)
             .caption("Markov visualitation of Central Limit Theorem", ("sans-serif", 50.0).into_font())
-            .build_cartesian_2d(0..self.buf.len(), 0..precition/2).map_err(|_| ())?;
+            .build_cartesian_2d(0..self.buf.len(), 0..10_000usize).map_err(|_| ())?;
         for (i,_) in self.enumerate() {
             if i == precition {
                 break
             }
         }
         chart.configure_mesh().light_line_style(WHITE).draw().map_err(|_| ())?;
-        chart.draw_series(self.buf.iter().enumerate().map(|i,e| CandleStick::new(Local::now(), 0, e, low, close, gain_style, loss_style, width)));
+        chart.draw_series(
+            LineSeries::new(
+                    self.buf.iter()
+                        .enumerate()
+                        .map(|(i,x)| (i, *x)),
+                    RED.mix(0.5).filled()
+                    )).map_err(|_| ())?;
         Ok(())
     }
 
-    fn get_median(&self) -> usize {
-        self.buf.len()/2
+    fn print_buf(&self) {
+        for i in self.buf.iter() {
+            print!("{i} ")
+        }
     }
 }
 
@@ -59,11 +67,14 @@ impl Iterator for Plane {
     fn next(&mut self) -> Option<Self::Item> {
         let n = self.r_thread.gen::<usize>();
         if n % 2 == 0 {
-            if self.ptr.checked_add_signed(1).is_none() {
-                self.ptr-=1
+            self.ptr += 1;
+            if self.ptr == self.buf.len() {
+                self.ptr -= 2;
             }
         } else {
-            if self.ptr.checked_add_signed(-1).is_none() {
+            if let Some(new_ptr) = self.ptr.checked_add_signed(-1) {
+                self.ptr = new_ptr
+            } else {
                 self.ptr+=1
             }
         }
@@ -75,5 +86,6 @@ impl Iterator for Plane {
 const OUT_FILE_NAME: &str = "markov.svg";
 
 fn main() {
-    Plane::new(101).draw(OUT_FILE_NAME,10_000).unwrap();
+    let mut p = Plane::new(10001);
+    p.draw(OUT_FILE_NAME,1000_000).unwrap();
 }
