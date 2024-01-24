@@ -2,7 +2,7 @@ use std::ffi::OsStr;
 use std::path::Path;
 
 use plotters::series::LineSeries;
-use plotters::{backend::SVGBackend, series::Histogram};
+use plotters::backend::SVGBackend;
 use plotters::chart::ChartBuilder;
 use plotters::drawing::IntoDrawingArea;
 use plotters::style::{IntoFont, Color};
@@ -52,12 +52,6 @@ impl Plane {
                     RED.mix(0.5).filled()
                     )).map_err(|_| ())?;
         Ok(())
-    }
-
-    fn print_buf(&self) {
-        for i in self.buf.iter() {
-            print!("{i} ")
-        }
     }
 }
 
