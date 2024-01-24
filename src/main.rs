@@ -12,7 +12,7 @@ use rand::thread_rng;
 use rand::distributions::{Bernoulli, Distribution};
 
 struct Plane {
-    buf: Vec<usize>,
+    buf: Vec<u16>,
     ptr: usize,
     distribution: Bernoulli,
     r_thread: ThreadRng,
@@ -51,7 +51,7 @@ impl Plane {
             LineSeries::new(
                     self.buf.iter()
                         .enumerate()
-                        .map(|(i,x)| (i, *x)),
+                        .map(|(i,x)| (i, *x as usize)),
                     RED.mix(0.5).filled()
                     )).map_err(|_| ())?;
         Ok(())
@@ -59,7 +59,7 @@ impl Plane {
 }
 
 impl Iterator for Plane {
-    type Item = usize;
+    type Item = u16;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.distribution.sample(&mut self.r_thread) {
